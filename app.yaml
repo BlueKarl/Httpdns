@@ -1,0 +1,15 @@
+appname: "httpdns2"
+entrypoints:
+    release-host:
+        cmd: "nginx -p /httpdns2/server -c /httpdns2/conf/release.conf"
+        ports:
+            - "54321/tcp"
+        network_mode: "host"
+    beta-host:
+        cmd: "nginx -p /httpdns2/server -c /httpdns2/conf/beta.conf"
+        ports:
+            - "54321/tcp"
+        network_mode: "host"
+build:
+    - "mkdir -p /httpdns2/server/logs"
+
