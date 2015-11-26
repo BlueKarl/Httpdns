@@ -10,7 +10,6 @@ end
 
 function _M.sp_request_count(p, sp_num)
     local key = string.format("%s", sp_num)
-    ngx.log(ngx.ERR, sp_num, ' ', key)
     rds:hincrby(common.HTTPDNS_SP_REQUESTS, key, 1)
 end
 

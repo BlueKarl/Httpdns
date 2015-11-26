@@ -5,15 +5,24 @@ local utils = require "utils"
 local stat = require "stat"
 
 local rds = redis:new()
-local domains, err = rds:smembers(common.HTTPDNS_DOMAIN)
-if err ~= nil then
-    ngx.log(ngx.ERR, err)
-    ngx.exit(ngx.HTTP_BAD_REQUEST)
+
+local function get_domains()
+    local domains, _ = cache:get("__domains__")
+    if not domains then
+        domains, err = rds:smembers(common.HTTPDNS_DOMAIN)
+        if err ~= nil then
+            ngx.log(ngx.ERR, err)
+            ngx.exit(ngx.HTTP_BAD_REQUEST)
+        end
+        if not domains then
+            ngx.exit(ngx.HTTP_NOT_FOUND)
+        end
+        cache:set("__domains__", domains, config.DEFAULT_TTL * 2)
+    end
+    return domains
 end
 
-if not domains then
-    ngx.exit(ngx.HTTP_NOT_FOUND)
-end
+local domains = get_domains()
 
 local function get_remote_ip()
     local headers = ngx.req.get_headers()
