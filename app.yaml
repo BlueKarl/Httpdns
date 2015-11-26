@@ -1,5 +1,11 @@
 appname: "httpdns2"
 entrypoints:
+    release:
+        privileged: true
+        cmd: "nginx -p /httpdns2/server -c /httpdns2/conf/release.conf"
+        ports:
+            - "54321/tcp"
+        network_mode: "bridge"
     release-host:
         privileged: true
         cmd: "nginx -p /httpdns2/server -c /httpdns2/conf/release.conf"

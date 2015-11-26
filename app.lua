@@ -2,10 +2,10 @@ local common = require "common"
 local config = require "config"
 local redis = require "redtool"
 local utils = require "utils"
+local stat = require "stat"
 
 local rds = redis:new()
 local domains, err = rds:smembers(common.HTTPDNS_DOMAIN)
--- 记录请求数
 if err ~= nil then
     ngx.log(ngx.ERR, err)
     ngx.exit(ngx.HTTP_BAD_REQUEST)
@@ -91,6 +91,7 @@ local function get_domains_info(sp_num)
     return domains_info
 end
 
+ngx.timer.at(0, stat.total_request_count)
 local remote = get_remote_ip()
 local sp_num = get_sp_num(remote)
 local domains_info = get_domains_info(sp_num)
@@ -101,7 +102,7 @@ result['device_isp'] = sp_num
 result['ttl'] = config.DEFAULT_TTL
 result['domains'] = domains_info
 
--- 记录对这个 SP 的 count
+ngx.timer.at(0, stat.sp_request_count, sp_num)
 ngx.say(cjson.encode(result))
 
 
