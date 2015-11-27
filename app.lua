@@ -32,7 +32,11 @@ local function get_remote_ip()
     local remote = ngx.var.arg_eip
     if not remote and x_forwarded_for then
         local s, _ = string.find(x_forwarded_for, ", ")
-        remote = string.sub(x_forwarded_for, 1, s-1)
+        if s then
+            remote = string.sub(x_forwarded_for, 1, s-1)
+        else
+            remote = x_forwarded_for
+        end
     elseif not remote and x_real_ip then
         remote = x_real_ip
     else
