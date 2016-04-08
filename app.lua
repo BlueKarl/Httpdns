@@ -93,6 +93,10 @@ string.split = function(s, p)
     return rt
 end
 
+function table_is_empty(t)
+    return _G.next(t) == nil
+end
+
 local function get_domains_test(sp_num)
     local cache_key = string.format(common.HTTPDNS_SP_CACHE, sp_num)
     local data, _ = cache:get(cache_key) 
@@ -124,6 +128,9 @@ local function get_domains_test(sp_num)
                                 hosts_info[count] = {priority=config.MATCHED_HOST_PRIORITY, ip=ip}
                                 count = count + 1
                             end
+                        end
+                        if table_is_empty(hosts_info) then
+                            hosts_info = nil
                         end
                         domains_name[_] = {dn=domain_choose, data=hosts_info, ttl=config.DEFAULT_TTL}
                     else
