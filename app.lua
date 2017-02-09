@@ -34,6 +34,18 @@ local function get_domains()
     return domains
 end
 
+local function default_ip()
+    if errcode == 0 then
+        ip, err = rds:get(common.HTTPDNS_DEFAULT_IP)
+        if err ~= nil then
+            errcode = 101
+            ngx.log(ngx.ERR, err)
+            ngx.exit(ngx.HTTP_BAD_REQUEST)
+        end
+    end
+    return ip
+end
+
 local domains = get_domains()
 
 local function get_remote_ip()
@@ -151,9 +163,11 @@ local remote = get_remote_ip()
 local sp_num = get_sp_num(remote)
 local k = get_domains_test(sp_num)
 local code = get_errcode()
+local ip = default_ip()
 local result = {}
 
 result['errcode'] = code
+result['default_ip'] = ip 
 if errcode == 0 then
     result['content'] = k
 else 
