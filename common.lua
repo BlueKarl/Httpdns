@@ -7,7 +7,8 @@ _M.HTTPDNS_SP_CACHE = 'httpdns:cache:sp:%s'
 _M.HTTPDNS_DOMAIN_SP = 'httpdns:domain:%s:%s'
 _M.HTTPDNS_TOTAL_REQUESTS = 'httpdns:total:requests'
 _M.HTTPDNS_SP_REQUESTS = 'httpdns:sp:requests'
-_M.HTTPDNS_DEFAULT_IP = 'httpdns:ip:default'
+_M.HTTPDNS_DEFAULT_IP = 'httpdns:default:ip'
+_M.HTTPDNS_WAIT_TIME = 'httpdns:default'
 
 _M.HTTPDNS_DEFAULT_SP = 0
 

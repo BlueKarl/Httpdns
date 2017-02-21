@@ -36,7 +36,7 @@ end
 
 local function default_ip()
     if errcode == 0 then
-        ip, err = rds:get(common.HTTPDNS_DEFAULT_IP)
+        ip, err = rds:smembers(common.HTTPDNS_DEFAULT_IP)
         if err ~= nil then
             errcode = 101
             ngx.log(ngx.ERR, err)
@@ -44,6 +44,25 @@ local function default_ip()
         end
     end
     return ip
+end
+
+local function wait_time()
+    if errcode == 0 then
+        wait_time, err = rds:hget(common.HTTPDNS_WAIT_TIME, 'wait_time')
+        if err ~= nil then
+            errcode = 101
+            ngx.log(ngx.ERR, err)
+            ngx.exit(ngx.HTTP_BAD_REQUEST)
+        end
+    end
+    return wait_time
+end
+
+local function config_set()
+    ip = default_ip()
+    wait_time = wait_time()
+    conf = {request_addr=ip, wait_time=tonumber(wait_time)}
+    return conf
 end
 
 local domains = get_domains()
@@ -163,11 +182,11 @@ local remote = get_remote_ip()
 local sp_num = get_sp_num(remote)
 local k = get_domains_test(sp_num)
 local code = get_errcode()
-local ip = default_ip()
+local conf = config_set()
 local result = {}
 
 result['errcode'] = code
-result['default_ip'] = ip 
+result['conf'] = conf 
 if errcode == 0 then
     result['content'] = k
 else 
