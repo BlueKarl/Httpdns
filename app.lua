@@ -6,7 +6,7 @@ local stat = require "stat"
 
 local rds = redis:new()
 
-local function get_errcode()
+local function get_errcode()  --获取错误码
     if config.SWITCH ~= 0 then
         errcode = 102
     else
@@ -15,7 +15,7 @@ local function get_errcode()
     return errcode
 end
 
-local function get_domains()
+local function get_domains()  --获取域名
     if errcode == 0 then
         local domains, _ = cache:get("__domains__")
         if not domains then
@@ -34,7 +34,7 @@ local function get_domains()
     return domains
 end
 
-local function default_ip()
+local function default_ip()  --获取request_addr
     if errcode == 0 then
         ip, err = rds:smembers(common.HTTPDNS_DEFAULT_IP)
         if err ~= nil then
@@ -46,7 +46,7 @@ local function default_ip()
     return ip
 end
 
-local function wait_time()
+local function wait_time()  --获取延迟时间
     if errcode == 0 then
         wait_time, err = rds:hget(common.HTTPDNS_WAIT_TIME, 'wait_time')
         if err ~= nil then
@@ -58,7 +58,7 @@ local function wait_time()
     return wait_time
 end
 
-local function config_set()
+local function config_set()  --组装conf字段
     ip = default_ip()
     wait_time = wait_time()
     conf = {request_addr=ip, wait_time=tonumber(wait_time)}
@@ -67,7 +67,7 @@ end
 
 local domains = get_domains()
 
-local function get_remote_ip()
+local function get_remote_ip() -- 获取cip的value
     local args = ngx.req.get_uri_args()
     local flag = 0
     local remote = ngx.var.arg_eip
@@ -77,10 +77,10 @@ local function get_remote_ip()
             flag = 1
         end
     end
-    if flag ~= 1 then
+    if flag ~= 1 then  -- 若无cip字段
         local headers = ngx.req.get_headers()
-        local x_forwarded_for = headers['x-forwarded-for']
-        local x_real_ip = headers['x-real-ip']
+        local x_forwarded_for = headers['X-Forwarded-For']  --获取xff请求头
+        local x_real_ip = headers['X-Real-IP'] --获取x-real-ip请求头
 
         if not remote and x_forwarded_for then
             local s, _ = string.find(x_forwarded_for, ", ")
@@ -98,7 +98,7 @@ local function get_remote_ip()
     return remote
 end
 
-local function get_sp_num(remote)
+local function get_sp_num(remote)  --获取remoteip对应的isp
     local long_ip = string.format('%d', utils.ip2long(remote))
     local ip_range_id, err = rds:zrangebyscore(common.HTTPDNS_IP_RANGE, long_ip, '+inf', 'limit', 0, 1)
     if err ~= nil then
@@ -118,7 +118,7 @@ local function get_sp_num(remote)
     return tonumber(sp_num)
 end
 
-string.split = function(s, p)
+string.split = function(s, p)  --字符串分割
     local rt= {}
     string.gsub(s, '[^'..p..']+', function(w) table.insert(rt, w) end )
     return rt
@@ -128,7 +128,7 @@ function table_is_empty(t)
     return _G.next(t) == nil
 end
 
-local function get_domains_test(sp_num)
+local function get_domains_test(sp_num)  --获取domain返回的信息
     local cache_key = string.format(common.HTTPDNS_SP_CACHE, sp_num)
     local data, _ = cache:get(cache_key) 
     local args = ngx.req.get_uri_args()
@@ -140,10 +140,10 @@ local function get_domains_test(sp_num)
                 local domain_list = string.split(v, ',')
                 for _, domain_choose in ipairs(domain_list) do
                     local default_hosts_key = string.format(common.HTTPDNS_DOMAIN_SP, domain_choose, common.HTTPDNS_DEFAULT_SP)
-                    default_hosts, err = rds:smembers(default_hosts_key)
+                    default_hosts, err = rds:smembers(default_hosts_key)  --域名的default解析结果
                     if sp_num ~= common.HTTPDNS_DEFAULT_SP and err == nil then
                         local domain_hosts_key = string.format(common.HTTPDNS_DOMAIN_SP, domain_choose, sp_num)
-                        domain_hosts, err = rds:smembers(domain_hosts_key)
+                        domain_hosts, err = rds:smembers(domain_hosts_key)  --域名非默认的解析结果
                     end
                     if not err then
                         local hosts_info = {}
@@ -163,7 +163,7 @@ local function get_domains_test(sp_num)
                         if table_is_empty(hosts_info) then
                             hosts_info = nil
                         end
-                        domains_name[_] = {dn=domain_choose, data=hosts_info, ttl=config.DEFAULT_TTL}
+                        domains_name[_] = {dn=domain_choose, data=hosts_info, ttl=config.DEFAULT_TTL}  --拼接解析结果
                     else
                     ngx.log(ngx.ERR, err)
                     end
