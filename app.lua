@@ -170,7 +170,7 @@ local function get_domains_test(sp_num)
                 end
             end
         end
-        cache:set(cache_key, domains_info, config.DEFAULT_TTL)
+        cache:set(cache_key, domains_name, config.DEFAULT_TTL)
     else
         domains_name = data
     end
