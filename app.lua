@@ -59,38 +59,26 @@ local function wait_time()  --获取延迟时间
 end
 
 local function config_set()  --组装conf字段
-    ip = default_ip()
-    wait_time = wait_time()
-    conf = {request_addr=ip, wait_time=tonumber(wait_time)}
-    return conf
+    if default_ip() then
+        local ip = {}
+        RandFetch(ip, #default_ip(), #default_ip(), default_ip())
+        wait_time = wait_time()
+        conf = {request_addr=ip, wait_time=tonumber(wait_time)}
+        return conf
+    else 
+        return nil
+    end
 end
 
 local domains = get_domains()
 
 local function get_remote_ip() -- 获取cip的value
-    local args = ngx.req.get_uri_args()
-    local flag = 0
-    local remote = ngx.var.arg_eip
-    for name, data in pairs(args) do
-        if name == "cip" then
-            remote = data
-            flag = 1
-        end
-    end
-    if flag ~= 1 then  -- 若无cip字段
-        local headers = ngx.req.get_headers()
-        local x_forwarded_for = headers['X-Forwarded-For']  --获取xff请求头
-        local x_real_ip = headers['X-Real-IP'] --获取x-real-ip请求头
-
-        if not remote and x_forwarded_for then
-            local s, _ = string.find(x_forwarded_for, ", ")
-            if s then
-                remote = string.sub(x_forwarded_for, 1, s-1)
-            else
-                remote = x_forwarded_for
-            end
-        elseif not remote and x_real_ip then
-            remote = x_real_ip
+    local remote = ngx.var.arg_cip
+    if not remote then   
+        --如果客户端没有通过代理服务器来访问，那么用 HTTP_X_FORWARDED_FOR 取到的值将是空的。
+        local x_forwarded_for = ngx.var.http_x_forwarded_for
+        if x_forwarded_for then
+            remote = x_forwarded_for
         else
             remote = ngx.var.remote_addr
         end
@@ -128,8 +116,20 @@ function table_is_empty(t)
     return _G.next(t) == nil
 end
 
+function RandFetch(list,num,poolSize,pool) -- list: 筛选结果，num: 筛取个数，poolSize: 筛取源大小，pool: 筛取源
+    pool = pool or {}
+    math.randomseed(tonumber(tostring(os.time()):reverse():sub(1,6)))
+    for i = 1, num do
+        local rand = math.random(i,poolSize)
+        local tmp = pool[rand] or rand
+        pool[rand] = pool[i] or i
+        pool[i] = tmp
+        table.insert(list, tmp)
+    end
+end
+
 local function get_domains_test(sp_num)  --获取domain返回的信息
-    local cache_key = string.format(common.HTTPDNS_SP_CACHE, sp_num)
+    local cache_key = string.format(common.HTTPDNS_SP_DN_CACHE, sp_num, ngx.var.arg_dn)
     local data, _ = cache:get(cache_key) 
     local args = ngx.req.get_uri_args()
     local domains_name = {}
@@ -147,6 +147,7 @@ local function get_domains_test(sp_num)  --获取domain返回的信息
                     end
                     if not err then
                         local hosts_info = {}
+                        local hosts = {}
                         local count = 1
                         if default_hosts then
                             for _, ip in ipairs(default_hosts) do
@@ -161,9 +162,11 @@ local function get_domains_test(sp_num)  --获取domain返回的信息
                             end
                         end
                         if table_is_empty(hosts_info) then
-                            hosts_info = nil
+                            hosts = nil
+                        else
+                            RandFetch(hosts, #hosts_info, #hosts_info, hosts_info)
                         end
-                        domains_name[_] = {dn=domain_choose, data=hosts_info, ttl=config.DEFAULT_TTL}  --拼接解析结果
+                        domains_name[_] = {dn=domain_choose, data=hosts, ttl=config.DEFAULT_TTL}  --拼接解析结果
                     else
                     ngx.log(ngx.ERR, err)
                     end
