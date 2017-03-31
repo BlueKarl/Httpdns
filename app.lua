@@ -168,7 +168,7 @@ local function get_domains_test(sp_num)  --获取domain返回的信息
                         end
                         domains_name[_] = {dn=domain_choose, data=hosts, ttl=config.DEFAULT_TTL}  --拼接解析结果
                     else
-                    ngx.log(ngx.ERR, err)
+                        ngx.log(ngx.ERR, err)
                     end
                 end
             end

@@ -1,7 +1,7 @@
 HttpDNS
 ========
 
-httpdns v0.2
+httpdns v2.1.0
 
 rewrited by [OpenResty](https://github.com/openresty/lua-nginx-module)
 
@@ -9,25 +9,16 @@ Usage
 =====
 
 ```
-http :5000/dns/
+URL/httpdns?dn=domainname1,domainname2,...
 ```
 
-```
-http :5000/dns/?eip=1.1.1.1
-```
+Random sorting of analytical result and according to the ISP region decision priority
+
+Multiple domain names can be requested at the same time,eg:
 
 ```
-http ':5000/dns/' 'X-Forwarded-For:12.1.1.1, 12.1.1.2, 12.1.1.3'
+127.0.0.1:6666/httpdns?dn=www.a.com,www.b.com,www.c.com
 ```
 
-```
-http ':5000/dns/' X-Real-IP:14.125.63.255
-```
 
-Remote IP Priority
-==================
 
-1. eip params
-2. by X-Forwarded-For
-3. by X-Real-IP
-4. http_remote
